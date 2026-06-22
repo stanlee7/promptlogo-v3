@@ -35,7 +35,7 @@ function getCoreConcept(logoTypeId, input1, input2) {
 /**
  * 메인 프롬프트 빌드 (Plain Text)
  */
-export function buildPrompt(input1, input2, styleEnglish, platform, logoTypeId = 'symbol', noParams = []) {
+export function buildPrompt(input1, input2, styleEnglish, platform, logoTypeId = 'symbol', noParams = [], aiCore = '') {
     const t1 = translateSubject(input1);
     const t2 = translateSubject(input2);
     const lt = logoTypes.find(t => t.id === logoTypeId) || logoTypes[0];
@@ -43,7 +43,8 @@ export function buildPrompt(input1, input2, styleEnglish, platform, logoTypeId =
     if (!t1) return '위에 만들고 싶은 로고의 대상을 입력해주세요 ✏️';
     if (lt.inputMode === 'dual' && !t2) return '두 번째 입력란도 채워주세요 ✏️';
 
-    const coreConcept = getCoreConcept(logoTypeId, t1, t2);
+    // AI 강화 컨셉이 있으면 템플릿 코어 컨셉 대신 사용
+    const coreConcept = aiCore ? aiCore : getCoreConcept(logoTypeId, t1, t2);
     const styleStr = styleEnglish.length > 0 ? ', ' + styleEnglish.join(', ') : '';
 
     switch (platform) {
@@ -70,7 +71,7 @@ export function buildPrompt(input1, input2, styleEnglish, platform, logoTypeId =
 /**
  * HTML 하이라이트 프롬프트 빌드
  */
-export function buildPromptHTML(input1, input2, styleEnglish, platform, logoTypeId = 'symbol', noParams = []) {
+export function buildPromptHTML(input1, input2, styleEnglish, platform, logoTypeId = 'symbol', noParams = [], aiCore = '') {
     const t1 = translateSubject(input1);
     const t2 = translateSubject(input2);
     const lt = logoTypes.find(t => t.id === logoTypeId) || logoTypes[0];
@@ -82,7 +83,10 @@ export function buildPromptHTML(input1, input2, styleEnglish, platform, logoType
     const h2 = `<span class="prompt-highlight-2">${t2}</span>`;
 
     let coreConceptH;
-    if (lt.inputMode === 'dual') {
+    if (aiCore) {
+        // AI 강화 컨셉은 통째로 하이라이트
+        coreConceptH = `<span class="prompt-ai-highlight">${aiCore}</span>`;
+    } else if (lt.inputMode === 'dual') {
         coreConceptH = lt.coreConcept.replace('{input1}', h1).replace('{input2}', h2);
     } else {
         coreConceptH = lt.coreConcept.replace('{subject}', h1);

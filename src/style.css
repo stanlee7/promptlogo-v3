@@ -1035,3 +1035,115 @@ body::before {
   background: rgba(167, 139, 250, 0.3);
   color: #fff;
 }
+/* ============================================= */
+/* 로컬 AI (Gemma3) 패널                          */
+/* ============================================= */
+.ai-panel {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--gradient-subtle);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  border-radius: var(--radius-md);
+}
+.ai-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.ai-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.ai-btn .ai-sub {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+.ai-btn:hover:not(:disabled) {
+  border-color: var(--accent-purple);
+  transform: translateY(-1px);
+}
+.ai-btn:disabled { opacity: 0.6; cursor: progress; }
+.ai-btn.ai-enhance { background: var(--gradient-main); color: #0a0a0f; border: none; }
+.ai-btn.ai-enhance .ai-sub { color: rgba(10, 10, 15, 0.7); }
+.ai-btn.ai-reset {
+  flex-direction: row;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+}
+.ai-badge-local {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--accent-green);
+  white-space: nowrap;
+}
+.ai-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ai-spin 0.7s linear infinite;
+  vertical-align: -2px;
+}
+@keyframes ai-spin { to { transform: rotate(360deg); } }
+
+/* 아이디어 카드 목록 */
+.ai-ideas {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.ai-ideas:empty { margin-top: 0; }
+.ai-idea-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.ai-idea-card:hover { border-color: var(--accent-purple); background: var(--bg-elevated); }
+.ai-idea-card.selected { border-color: var(--accent-purple); box-shadow: 0 0 0 1px var(--accent-purple) inset; }
+.ai-idea-num {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  background: var(--gradient-main);
+  color: #0a0a0f;
+  font-size: 0.78rem; font-weight: 700;
+  border-radius: 50%;
+}
+.ai-idea-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ai-idea-ko { font-size: 0.92rem; font-weight: 600; }
+.ai-idea-en { font-size: 0.76rem; color: var(--text-secondary); }
+
+/* 프롬프트 내 AI 컨셉 하이라이트 */
+.prompt-ai-highlight {
+  color: var(--accent-purple);
+  background: rgba(167, 139, 250, 0.12);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 600;
+}

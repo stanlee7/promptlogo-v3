@@ -6,6 +6,7 @@
 import './style.css';
 import { logoTypes, industryPresets, styleTags, midjourneyNoParams, mockupPrompts, bestPresets, dualInputCombos } from './data.js';
 import { buildPrompt, buildPromptHTML } from './promptBuilder.js';
+import { isAvailable, enhanceConcept, suggestConcepts } from './ai.js';
 
 const state = {
   logoType: 'symbol',
@@ -15,6 +16,8 @@ const state = {
   selectedStyles: new Set(),
   platform: 'midjourney',
   selectedNoParams: new Set(['text']),
+  aiCore: '',       // AI가 생성한 영어 코어 컨셉 (있으면 템플릿 대신 사용)
+  aiCoreKey: '',    // aiCore가 생성된 시점의 입력 키 — 바뀌면 자동 무효화
 };
 
 let els = {};
@@ -24,6 +27,18 @@ function init() {
   bindElements();
   bindEvents();
   updatePrompt();
+  detectLocalAI();
+}
+
+// Ollama(로컬 Gemma)가 감지되면 AI 패널 노출, 아니면 숨김 유지
+async function detectLocalAI() {
+  try {
+    if (await isAvailable() && els.aiPanel) {
+      els.aiPanel.hidden = false;
+    }
+  } catch {
+    /* 미감지 시 조용히 무시 */
+  }
 }
 
 function renderApp() {
@@ -160,6 +175,21 @@ function renderApp() {
             복사하기
           </button>
         </div>
+
+        <!-- 로컬 AI (Gemma3) 패널 — Ollama 감지 시에만 표시 -->
+        <div id="ai-panel" class="ai-panel" hidden>
+          <div class="ai-actions">
+            <button id="ai-enhance-btn" class="ai-btn ai-enhance">
+              ✨ AI 강화 <span class="ai-sub">대상 맞춤 메타포로 재작성</span>
+            </button>
+            <button id="ai-idea-btn" class="ai-btn ai-idea">
+              💡 AI 아이디어 <span class="ai-sub">시각 컨셉 3개 제안</span>
+            </button>
+            <button id="ai-reset-btn" class="ai-btn ai-reset" hidden>↩ 원래대로</button>
+            <span class="ai-badge-local">🖥️ 로컬 Gemma3 · 무료</span>
+          </div>
+          <div id="ai-ideas" class="ai-ideas"></div>
+        </div>
       </section>
 
       <!-- STEP 6: 목업 프롬프트 -->
@@ -198,6 +228,11 @@ function bindElements() {
     mockupContainer: document.getElementById('mockup-container'),
     toast: document.getElementById('toast'),
     cheatContainer: document.getElementById('cheat-container'),
+    aiPanel: document.getElementById('ai-panel'),
+    aiEnhanceBtn: document.getElementById('ai-enhance-btn'),
+    aiIdeaBtn: document.getElementById('ai-idea-btn'),
+    aiResetBtn: document.getElementById('ai-reset-btn'),
+    aiIdeas: document.getElementById('ai-ideas'),
   };
 
   renderLogoTypes();
@@ -522,6 +557,125 @@ function bindEvents() {
     comboBtn.classList.add('clicked');
     setTimeout(() => comboBtn.classList.remove('clicked'), 300);
   });
+
+  bindAiEvents();
+}
+
+// ============= 로컬 AI (Gemma3) =============
+function logoTypeKo() {
+  return (logoTypes.find(t => t.id === state.logoType) || logoTypes[0]).ko;
+}
+
+function requireSubject() {
+  const lt = logoTypes.find(t => t.id === state.logoType) || logoTypes[0];
+  if (!state.input1.trim()) {
+    showToastMsg('⚠️ 먼저 로고 대상을 입력하세요');
+    return false;
+  }
+  if (lt.inputMode === 'dual' && !state.input2.trim()) {
+    showToastMsg('⚠️ 두 번째 입력란도 채워주세요');
+    return false;
+  }
+  return true;
+}
+
+function setAiLoading(btn, on, label) {
+  if (!btn) return;
+  if (on) {
+    btn.dataset.html = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.innerHTML = `<span class="ai-spinner"></span> ${label}`;
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    if (btn.dataset.html) btn.innerHTML = btn.dataset.html;
+  }
+}
+
+function clearAiIdeasSelection() {
+  els.aiIdeas?.querySelectorAll('.ai-idea-card.selected')
+    .forEach(c => c.classList.remove('selected'));
+}
+
+function applyAiCore(coreEn) {
+  state.aiCore = coreEn;
+  state.aiCoreKey = currentInputKey();
+  updatePrompt();
+}
+
+function bindAiEvents() {
+  // ✨ AI 강화: 현재 대상에 맞는 창의적 컨셉으로 재작성
+  els.aiEnhanceBtn?.addEventListener('click', async () => {
+    if (!requireSubject()) return;
+    setAiLoading(els.aiEnhanceBtn, true, 'Gemma 생각 중…');
+    try {
+      const core = await enhanceConcept({
+        subject1: state.input1.trim(),
+        subject2: state.input2.trim(),
+        logoTypeId: state.logoType,
+        logoTypeKo: logoTypeKo(),
+      });
+      if (!core) throw new Error('empty');
+      applyAiCore(core);
+      showToastMsg('✨ AI 강화 완료! 프롬프트가 업데이트됐어요');
+    } catch {
+      showToastMsg('⚠️ AI 호출 실패 (Ollama 확인)');
+    } finally {
+      setAiLoading(els.aiEnhanceBtn, false);
+    }
+  });
+
+  // 💡 AI 아이디어: 시각 메타포 3개 제안
+  els.aiIdeaBtn?.addEventListener('click', async () => {
+    if (!requireSubject()) return;
+    setAiLoading(els.aiIdeaBtn, true, 'Gemma 발상 중…');
+    els.aiIdeas.innerHTML = '';
+    try {
+      const ideas = await suggestConcepts({
+        subject1: state.input1.trim(),
+        subject2: state.input2.trim(),
+        logoTypeKo: logoTypeKo(),
+      });
+      if (!ideas.length) throw new Error('empty');
+      renderAiIdeas(ideas);
+    } catch {
+      showToastMsg('⚠️ AI 호출 실패 (Ollama 확인)');
+    } finally {
+      setAiLoading(els.aiIdeaBtn, false);
+    }
+  });
+
+  // ↩ 원래대로: 템플릿 컨셉으로 복귀
+  els.aiResetBtn?.addEventListener('click', () => {
+    state.aiCore = '';
+    state.aiCoreKey = '';
+    clearAiIdeasSelection();
+    updatePrompt();
+    showToastMsg('↩ 기본 프롬프트로 되돌렸어요');
+  });
+
+  // 아이디어 카드 클릭 → 프롬프트에 반영
+  els.aiIdeas?.addEventListener('click', (e) => {
+    const card = e.target.closest('.ai-idea-card');
+    if (!card) return;
+    clearAiIdeasSelection();
+    card.classList.add('selected');
+    applyAiCore(decodeURIComponent(card.dataset.en));
+    showToastMsg('💡 아이디어 반영 완료!');
+  });
+}
+
+function renderAiIdeas(ideas) {
+  els.aiIdeas.innerHTML = ideas.map((it, i) => `
+    <button class="ai-idea-card" data-en="${encodeURIComponent(it.en || '')}">
+      <span class="ai-idea-num">${i + 1}</span>
+      <div class="ai-idea-text">
+        <span class="ai-idea-ko">${it.ko || ''}</span>
+        <span class="ai-idea-en">${it.en || ''}</span>
+      </div>
+    </button>
+  `).join('');
 }
 
 function applyIndustryPreset(industryId) {
@@ -540,7 +694,19 @@ function clearAutoStyles() {
   els.styleContainer.querySelectorAll('.style-tag').forEach(t => t.classList.remove('active'));
 }
 
+function currentInputKey() {
+  return `${state.logoType}|${state.input1.trim()}|${state.input2.trim()}`;
+}
+
 function updatePrompt() {
+  // 대상/유형이 바뀌면 AI 강화 컨셉은 자동 무효화 (스타일·플랫폼 변경은 유지)
+  if (state.aiCore && state.aiCoreKey !== currentInputKey()) {
+    state.aiCore = '';
+    state.aiCoreKey = '';
+    clearAiIdeasSelection();
+  }
+  if (els.aiResetBtn) els.aiResetBtn.hidden = !state.aiCore;
+
   const selectedStyleEn = [];
   state.selectedStyles.forEach(id => {
     const tag = styleTags.find(t => t.id === id);
@@ -548,10 +714,10 @@ function updatePrompt() {
   });
 
   const noParams = state.platform === 'midjourney' ? [...state.selectedNoParams] : [];
-  const plain = buildPrompt(state.input1, state.input2, selectedStyleEn, state.platform, state.logoType, noParams);
+  const plain = buildPrompt(state.input1, state.input2, selectedStyleEn, state.platform, state.logoType, noParams, state.aiCore);
   els.promptOutput.value = plain;
 
-  const html = buildPromptHTML(state.input1, state.input2, selectedStyleEn, state.platform, state.logoType, noParams);
+  const html = buildPromptHTML(state.input1, state.input2, selectedStyleEn, state.platform, state.logoType, noParams, state.aiCore);
   els.promptOutputHTML.innerHTML = html;
 }
 
