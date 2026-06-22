@@ -64,8 +64,6 @@ function renderApp() {
         </div>
       </header>
 
-      </header>
-
       <!-- CHAT KEY: 원클릭 치트키 -->
       <section class="section cheat-section">
         <div class="section-header">
@@ -85,6 +83,10 @@ function renderApp() {
           `).join('')}
         </div>
       </section>
+
+      <!-- 작업 영역: 좌(선택) / 우(결과 고정) 2단 -->
+      <div class="workspace">
+        <div class="controls-col">
 
       <!-- STEP 1: 로고 유형 -->
       <section class="section">
@@ -136,11 +138,15 @@ function renderApp() {
         <div id="style-container" class="style-container"></div>
       </section>
 
-      <!-- STEP 5: 프롬프트 출력 -->
+        </div><!-- /controls-col -->
+
+        <div class="result-col">
+      <!-- STEP 5: 프롬프트 출력 (고정 결과) -->
       <section class="section output-section">
         <div class="section-header">
           <span class="step-badge">5</span>
           <h2>완성된 프롬프트</h2>
+          <span class="live-badge"><span class="live-dot"></span>실시간</span>
         </div>
         <div class="platform-tabs" id="platform-tabs">
           <button class="platform-tab active" data-platform="midjourney">
@@ -191,6 +197,8 @@ function renderApp() {
           <div id="ai-ideas" class="ai-ideas"></div>
         </div>
       </section>
+        </div><!-- /result-col -->
+      </div><!-- /workspace -->
 
       <!-- STEP 6: 목업 프롬프트 -->
       <section class="section mockup-section">

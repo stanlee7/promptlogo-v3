@@ -67,7 +67,7 @@ body::before {
 .container {
   position: relative;
   z-index: 1;
-  max-width: 800px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 40px 24px 60px;
 }
@@ -1146,4 +1146,102 @@ body::before {
   padding: 1px 4px;
   border-radius: 4px;
   font-weight: 600;
+}
+
+/* ============================================= */
+/* 2단 워크스페이스 레이아웃 (선택 / 결과 고정)    */
+/* ============================================= */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.controls-col { min-width: 0; }
+.result-col {
+  position: sticky;
+  top: 20px;
+  min-width: 0;
+}
+
+/* 결과 카드 강조 — 우측 시선 집중 */
+.result-col .output-section {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0;
+  border-color: rgba(167, 139, 250, 0.4);
+  box-shadow: 0 0 40px rgba(167, 139, 250, 0.12), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.result-col .output-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gradient-main);
+}
+
+/* 실시간 배지 + 펄스 */
+.live-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent-green);
+  background: rgba(52, 211, 153, 0.1);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  animation: live-pulse 1.8s ease-out infinite;
+}
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(52, 211, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+/* ============================================= */
+/* 진입 애니메이션 (스태거)                        */
+/* ============================================= */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.header,
+.cheat-section,
+.workspace,
+.mockup-section,
+.footer {
+  animation: rise-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.cheat-section  { animation-delay: 0.05s; }
+.workspace      { animation-delay: 0.10s; }
+.mockup-section { animation-delay: 0.16s; }
+.footer         { animation-delay: 0.20s; }
+
+/* 카드 호버 미세 리프트 */
+.section { transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition); }
+.controls-col .section:hover { transform: translateY(-2px); }
+
+/* ============================================= */
+/* 반응형: 태블릿/모바일                           */
+/* ============================================= */
+@media (max-width: 920px) {
+  .workspace { grid-template-columns: 1fr; }
+  .result-col { position: static; }
+  .result-col .output-section { box-shadow: var(--shadow-glow); }
+}
+
+/* 접근성: 모션 최소화 선호 시 애니메이션 끔 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
