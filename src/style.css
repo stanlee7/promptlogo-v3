@@ -1308,3 +1308,34 @@ body::before {
   flex-direction: row;
   background: var(--bg-elevated);
 }
+
+/* ============================================= */
+/* 데스크톱 앱 다운로드 버튼 (헤더, 웹 전용)       */
+/* ============================================= */
+.download-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--gradient-main);
+  color: #0a0a0f;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-family: inherit;
+  box-shadow: 0 4px 16px rgba(167, 139, 250, 0.25);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(167, 139, 250, 0.4);
+}
+.download-icon { font-size: 1.1rem; }
+.download-text { display: flex; flex-direction: column; line-height: 1.15; }
+.download-text strong { font-size: 0.88rem; font-weight: 700; }
+.download-text small { font-size: 0.68rem; opacity: 0.75; }
+
+@media (max-width: 640px) {
+  .download-btn { width: 100%; margin: 12px 0 0; justify-content: center; }
+  .header { flex-wrap: wrap; }
+}

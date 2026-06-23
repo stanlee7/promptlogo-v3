@@ -28,6 +28,10 @@ function init() {
   bindEvents();
   updatePrompt();
   detectLocalAI();
+
+  // 다운로드 버튼은 웹 브라우저에서만 노출 (데스크톱 앱 안에서는 불필요)
+  const dl = document.getElementById('download-app');
+  if (dl && !isElectron) dl.hidden = false;
 }
 
 const isElectron = /electron/i.test(navigator.userAgent);
@@ -47,9 +51,13 @@ async function detectLocalAI() {
     els.aiReady.hidden = false;
   } else {
     els.aiSetup.hidden = false;
-    els.aiSetupNote.textContent = isElectron
-      ? '완전 오프라인·무료로 동작합니다. 1회만 설치하면 됩니다.'
-      : '데스크톱 앱에서 가장 안정적으로 동작합니다. (브라우저는 보안 정책상 로컬 연결이 제한될 수 있어요)';
+    if (isElectron) {
+      els.aiSetupNote.textContent = '완전 오프라인·무료로 동작합니다. 1회만 설치하면 됩니다.';
+    } else {
+      els.aiSetupNote.innerHTML =
+        '브라우저는 보안 정책상 로컬 연결이 제한될 수 있어요. ' +
+        '<a href="https://github.com/stanlee7/promptlogo-v3/releases/latest" target="_blank" rel="noopener">데스크톱 앱 다운로드 →</a>';
+    }
   }
 }
 
@@ -74,6 +82,15 @@ function renderApp() {
           <h1>PromptLogo</h1>
           <p class="subtitle">한글로 선택하면, AI 로고 프롬프트가 완성됩니다</p>
         </div>
+        <a id="download-app" class="download-btn"
+           href="https://github.com/stanlee7/promptlogo-v3/releases/latest"
+           target="_blank" rel="noopener" hidden>
+          <span class="download-icon">⬇</span>
+          <span class="download-text">
+            <strong>데스크톱 앱</strong>
+            <small>로컬 AI 무료 · Windows</small>
+          </span>
+        </a>
       </header>
 
       <!-- CHAT KEY: 원클릭 치트키 -->
