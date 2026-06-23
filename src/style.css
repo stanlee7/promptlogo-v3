@@ -1245,3 +1245,66 @@ body::before {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ============================================= */
+/* 로컬 AI 상태: 확인 중 / 설치 가이드            */
+/* ============================================= */
+.ai-detecting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.ai-setup { font-size: 0.85rem; }
+.ai-setup-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.ai-setup-note {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  margin-bottom: 12px;
+}
+.ai-setup-steps {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+}
+.ai-setup-steps li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+.ai-step-n {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  background: var(--gradient-main);
+  color: #0a0a0f;
+  font-size: 0.72rem; font-weight: 700;
+  border-radius: 50%;
+}
+.ai-setup-steps a {
+  color: var(--accent-purple);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ai-setup-steps code {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.8rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: var(--accent-green);
+}
+.ai-btn.ai-retry {
+  flex-direction: row;
+  background: var(--bg-elevated);
+}

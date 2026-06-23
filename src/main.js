@@ -30,14 +30,26 @@ function init() {
   detectLocalAI();
 }
 
-// Ollama(로컬 Gemma)가 감지되면 AI 패널 노출, 아니면 숨김 유지
+const isElectron = /electron/i.test(navigator.userAgent);
+
+// 로컬 Ollama 감지 → 연결됨(액션) / 미연결(설치 가이드) 상태 전환
 async function detectLocalAI() {
-  try {
-    if (await isAvailable() && els.aiPanel) {
-      els.aiPanel.hidden = false;
-    }
-  } catch {
-    /* 미감지 시 조용히 무시 */
+  if (!els.aiPanel) return;
+  els.aiDetecting.hidden = false;
+  els.aiReady.hidden = true;
+  els.aiSetup.hidden = true;
+
+  let ok = false;
+  try { ok = await isAvailable(); } catch { ok = false; }
+
+  els.aiDetecting.hidden = true;
+  if (ok) {
+    els.aiReady.hidden = false;
+  } else {
+    els.aiSetup.hidden = false;
+    els.aiSetupNote.textContent = isElectron
+      ? '완전 오프라인·무료로 동작합니다. 1회만 설치하면 됩니다.'
+      : '데스크톱 앱에서 가장 안정적으로 동작합니다. (브라우저는 보안 정책상 로컬 연결이 제한될 수 있어요)';
   }
 }
 
@@ -182,9 +194,15 @@ function renderApp() {
           </button>
         </div>
 
-        <!-- 로컬 AI (Gemma3) 패널 — Ollama 감지 시에만 표시 -->
-        <div id="ai-panel" class="ai-panel" hidden>
-          <div class="ai-actions">
+        <!-- 로컬 AI (Gemma3) 패널 -->
+        <div id="ai-panel" class="ai-panel">
+          <!-- 확인 중 -->
+          <div id="ai-detecting" class="ai-detecting">
+            <span class="ai-spinner"></span> 로컬 AI(Gemma) 확인 중…
+          </div>
+
+          <!-- 연결됨: AI 액션 -->
+          <div id="ai-ready" class="ai-actions" hidden>
             <button id="ai-enhance-btn" class="ai-btn ai-enhance">
               ✨ AI 강화 <span class="ai-sub">대상 맞춤 메타포로 재작성</span>
             </button>
@@ -194,6 +212,19 @@ function renderApp() {
             <button id="ai-reset-btn" class="ai-btn ai-reset" hidden>↩ 원래대로</button>
             <span class="ai-badge-local">🖥️ 로컬 Gemma3 · 무료</span>
           </div>
+
+          <!-- 미연결: 설치 가이드 -->
+          <div id="ai-setup" class="ai-setup" hidden>
+            <p class="ai-setup-title">🖥️ 로컬 AI(Gemma)를 연결하면 ✨강화·💡아이디어가 켜집니다</p>
+            <p class="ai-setup-note" id="ai-setup-note"></p>
+            <ol class="ai-setup-steps">
+              <li><span class="ai-step-n">1</span> <a href="https://ollama.com/download" target="_blank" rel="noopener">Ollama 설치</a> 후 실행</li>
+              <li><span class="ai-step-n">2</span> 터미널에 <code>ollama pull gemma3:4b-it-qat</code> 입력</li>
+              <li><span class="ai-step-n">3</span> 아래 버튼으로 다시 확인</li>
+            </ol>
+            <button id="ai-retry-btn" class="ai-btn ai-retry">🔄 다시 확인</button>
+          </div>
+
           <div id="ai-ideas" class="ai-ideas"></div>
         </div>
       </section>
@@ -237,6 +268,11 @@ function bindElements() {
     toast: document.getElementById('toast'),
     cheatContainer: document.getElementById('cheat-container'),
     aiPanel: document.getElementById('ai-panel'),
+    aiDetecting: document.getElementById('ai-detecting'),
+    aiReady: document.getElementById('ai-ready'),
+    aiSetup: document.getElementById('ai-setup'),
+    aiSetupNote: document.getElementById('ai-setup-note'),
+    aiRetryBtn: document.getElementById('ai-retry-btn'),
     aiEnhanceBtn: document.getElementById('ai-enhance-btn'),
     aiIdeaBtn: document.getElementById('ai-idea-btn'),
     aiResetBtn: document.getElementById('ai-reset-btn'),
@@ -662,6 +698,9 @@ function bindAiEvents() {
     updatePrompt();
     showToastMsg('↩ 기본 프롬프트로 되돌렸어요');
   });
+
+  // 🔄 다시 확인: Ollama 재감지
+  els.aiRetryBtn?.addEventListener('click', () => detectLocalAI());
 
   // 아이디어 카드 클릭 → 프롬프트에 반영
   els.aiIdeas?.addEventListener('click', (e) => {
