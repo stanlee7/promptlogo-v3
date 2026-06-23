@@ -1,0 +1,4 @@
+release
+electron
+node_modules
+*.exe
